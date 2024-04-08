@@ -1,0 +1,15 @@
+@model List<ArticleModel>
+
+<h2>Articles</h2>
+<div class="row">
+    <a asp-action="Aggregate" asp-controller="Article" class="col-12  col-lg-4 btn btn-danger">Aggregate</a>
+</div>
+
+@if (Model !=null )
+{
+    foreach (var article in Model)
+    {
+        //await Html.RenderPartialAsync("_ArticlePreview", article);
+        await Html.RenderPartialAsync("_ArticlePreview", article, new ViewDataDictionary(ViewData));
+    }
+}
