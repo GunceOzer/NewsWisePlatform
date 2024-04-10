@@ -1,0 +1,24 @@
+@model IEnumerable<NewsAggregationApplication.UI.Models.ArticleModel>
+
+<h2>Bookmarked Articles</h2>
+
+@if (!Model.Any())
+{
+    <p>You have not bookmarked any articles</p>
+}
+
+<div class="article-list">
+    @foreach (var article in Model)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@article.Title</h5>
+                <p class="card-text">@Html.Raw(article.Description)</p>
+                <a href="@Url.Action("Details", "Article", new { id = article.Id })" class="btn btn-primary">Read more</a>
+                <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@article.Id" method="post">
+                    <button type="submit" class="btn btn-warning">Unbookmark</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>

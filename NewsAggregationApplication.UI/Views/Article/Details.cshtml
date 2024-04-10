@@ -1,0 +1,71 @@
+@model NewsAggregationApplication.UI.Models.ArticleModel
+
+<article>
+    <header>
+        <h1>@Model.Title</h1>
+            <p>@Html.Raw(Model.Description)</p>
+            <p>@Model.Content</p>
+        <p>Published on @Model.PublicationDate.ToString("MMMM dd, yyyy")</p>
+        <p>Source: <a href="@Model.SourceUrl" target="_blank">@Model.SourceUrl</a></p>
+    </header>
+    
+    <section class="content">
+         @if (User.Identity.IsAuthenticated)
+                {
+                    <!-- Like and Unlike buttons -->
+                    @using (Html.BeginForm("Like", "Like", new { articleId = Model.Id }, FormMethod.Post))
+                    {
+                        <button type="submit" class="btn btn-success">Like</button>
+                    }
+        
+                    @using (Html.BeginForm("Unlike", "Like", new { articleId = Model.Id }, FormMethod.Post))
+                    {
+                        <button type="submit" class="btn btn-warning">Unlike</button>
+                    }
+                  
+                }
+                  <span>@Model.LikesCount Likes</span>
+        <p>@Html.Raw(Model.Content)</p>
+    </section>
+    @if (User.Identity.IsAuthenticated)
+        {
+            <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@Model.Id" method="post">
+                @if (Model.IsBookmarked)
+                {
+                    <button type="submit" class="btn btn-info"><i class="fas fa-bookmark"></i> Unbookmark</button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-outline-info"><i class="far fa-bookmark"></i> Bookmark</button>
+                }
+            </form>
+        }
+
+    @if (Model.Comments != null && Model.Comments.Any())
+    {
+        <section class="comments">
+            <h3>Comments</h3>
+            @foreach (var comment in Model.Comments)
+            {
+                <div class="comment">
+                    <p>@comment.Content</p>
+                    <footer>
+                        <p>Comment by @comment.Username on @comment.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                    </footer>
+                </div>
+            }
+        </section>
+    }
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <form asp-action="AddComment" asp-controller="Article" method="post">
+            <div class="form-group">
+                <label for="commentContent">Add a comment:</label>
+                <textarea id="commentContent" name="Content" class="form-control"></textarea>
+                <input type="hidden" name="ArticleId" value="@Model.Id" />
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Comment</button>
+        </form>
+    }
+</article>

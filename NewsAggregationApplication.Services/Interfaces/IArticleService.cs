@@ -1,4 +1,5 @@
 using NewsAggregationApplication.Data.Entities;
+using NewsAggregationApplication.UI.DTOs;
 
 namespace NewsAggregationApplication.UI.Interfaces;
 
@@ -10,12 +11,12 @@ public interface IArticleService
     public Task AggregateFromSourceAsync(string rssLink);
     public Task<bool> DeleteArticleAsync(Guid id);
 
-    public Task<bool> LikeArticleAsync(Guid articleId, Guid userId);
-    public Task<bool> UnlikeArticleAsync(Guid articleId, Guid userId);
+   // public Task<bool> LikeArticleAsync(Guid articleId, Guid userId);
+    //public Task<bool> UnlikeArticleAsync(Guid articleId, Guid userId);
 
-    public Task<bool> BookmarkArticleAsync(Guid articleId, Guid userId);
-    public Task<bool> RemoveBookmarkAsync(Guid articleId, Guid userId);
-    public Task<IEnumerable<Article>> GetBookmarkArticlesAsync(Guid userId);
-    public Task AddCommentAsync(Comment comment);
-   // public Task<List<CommentViewModel>> GetCommentsByArticleIdAsync(Guid articleId);
+    //public Task<bool> BookmarkArticleAsync(Guid articleId, Guid userId);
+    //public Task<bool> RemoveBookmarkAsync(Guid articleId, Guid userId);
+    // Task<IEnumerable<Article>> GetBookmarkArticlesAsync(Guid userId);
+    public Task AddCommentAsync(CommentDTO commentDTO, Guid userID);
+    public Task<List<CommentDTO>> GetCommentsByArticleIdAsync(Guid articleId);
 }

@@ -4,7 +4,7 @@
     <div class="card-body">
         <h3 class="card-title">@Model.Title</h3>
         <p class="card-text">@Html.Raw(Model.Description)</p>
-        <a href="#" class="btn btn-primary">More Detail</a>
+        <a asp-controller="Article" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">More Detail</a>
         @if ((bool?)ViewData["IsAdmin"] == true)
         {
 
@@ -17,24 +17,45 @@
          @if (User.Identity.IsAuthenticated)
         {
             <!-- Like and Unlike buttons -->
-            @using (Html.BeginForm("Like", "Article", new { articleId = Model.Id }, FormMethod.Post))
+            @using (Html.BeginForm("Like", "Like", new { articleId = Model.Id }, FormMethod.Post))
             {
                 <button type="submit" class="btn btn-success">Like</button>
             }
 
-            @using (Html.BeginForm("Unlike", "Article", new { articleId = Model.Id }, FormMethod.Post))
+            @using (Html.BeginForm("Unlike", "Like", new { articleId = Model.Id }, FormMethod.Post))
             {
                 <button type="submit" class="btn btn-warning">Unlike</button>
             }
+          
         }
-        @if (User.Identity.IsAuthenticated){
+          <span>@Model.LikesCount Likes</span>
+        <!--if (User.Identity.IsAuthenticated){
         
-            <form asp-action="Bookmark" asp-controller="Article" asp-route-articleId="@Model.Id" method="post">
-                <button type="submit" class="btn btn-info">Bookmark</button>
-            </form>
+        <form asp-action="Bookmark" asp-controller="Bookmark" asp-route-articleId="@Model.Id" method="post">
+            <button type="submit" class="btn btn-info">Bookmark</button>
+        </form>
+        
+        <span>@Model.LikesCount Likes</span> -->
+        
+        @if (User.Identity.IsAuthenticated)
+            {
+                <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@Model.Id" method="post">
+                    <button type="submit" class="btn @(Model.IsBookmarked ? "btn-info" : "btn-outline-info")">
+                        <i class="@(Model.IsBookmarked ? "fas" : "far") fa-bookmark"></i> @(Model.IsBookmarked ? "Unbookmark" : "Bookmark")
+                    </button>
+
+                    @*@if (Model.IsBookmarked)
+                    {
+                        <button type="submit" class="btn btn-info"><i class="fas fa-bookmark"></i> Unbookmark</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-outline-info"><i class="far fa-bookmark"></i> Bookmark</button>
+                    }*@
+                </form>
+            }
         
         
-            <span>@Model.LikesCount Likes</span> <!-- Display the like count -->
-        }
+        
     </div>
 </div>

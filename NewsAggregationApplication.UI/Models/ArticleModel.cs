@@ -1,3 +1,5 @@
+using NewsAggregationApplication.UI.DTOs;
+
 namespace NewsAggregationApplication.UI.Models;
 
 public class ArticleModel
@@ -9,6 +11,7 @@ public class ArticleModel
     public DateTime PublicationDate { get; set; }
     public string SourceUrl { get; set; }
     public int? LikesCount { get; set; }
+    public bool IsBookmarked { get; set; }
     
     public List<CommentViewModel> Comments { get; set; }
 }

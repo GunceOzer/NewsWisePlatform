@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.Data;
 using NewsAggregationApplication.Data.Entities;
+using NewsAggregationApplication.UI.DTOs;
 using NewsAggregationApplication.UI.Interfaces;
 
 
@@ -28,7 +29,11 @@ public class ArticleService:IArticleService
 
     public async Task<Article?> GetArticlesByIdAsync(Guid id)
     {
-        return await _dbContext.Articles.SingleOrDefaultAsync(a => a.Id.Equals(id));
+        return await _dbContext.Articles
+            .Include(a=>a.Likes)
+            .Include(a=>a.Comments)
+            .ThenInclude(c=>c.User)
+            .SingleOrDefaultAsync(a => a.Id.Equals(id));
     }
 
     public async Task AggregateFromSourceAsync(string rssLink)
@@ -88,7 +93,7 @@ public class ArticleService:IArticleService
         return true;
     }
 
-    public async Task<bool> LikeArticleAsync(Guid articleId, Guid userId)
+    /*public async Task<bool> LikeArticleAsync(Guid articleId, Guid userId)
     {
         if (_dbContext.Likes.Any(l => l.ArticleId == articleId && l.UserId == userId))
         {
@@ -120,9 +125,9 @@ public class ArticleService:IArticleService
         await _dbContext.SaveChangesAsync();
         return true;
 
-    }
+    }*/
 
-    public async Task<bool> BookmarkArticleAsync(Guid articleId, Guid userId)
+    /*public async Task<bool> BookmarkArticleAsync(Guid articleId, Guid userId)
     {
         if (_dbContext.Bookmarks.Any(b => b.ArticleId == articleId && b.UserId == userId))
         {
@@ -164,11 +169,25 @@ public class ArticleService:IArticleService
             .Select(b => b.Article)
             .Include(a => a.Bookmarks)
             .ToListAsync();
-    }
+    }*/
 
-    public async Task AddCommentAsync(Comment comment)
+    public async Task AddCommentAsync(CommentDTO commentDto , Guid userID)
     {
+        var comment = new Comment
+        {
+            Id = Guid.NewGuid(),
+            Content = commentDto.Content,
+            ArticleId = commentDto.ArticleId,
+            UserId = userID,
+            CreatedAt = DateTime.UtcNow
+        };
+        
         _dbContext.Comments.Add(comment);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public Task<List<CommentDTO>> GetCommentsByArticleIdAsync(Guid articleId)
+    {
+        throw new NotImplementedException();
     }
 }

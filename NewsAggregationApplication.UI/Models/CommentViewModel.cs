@@ -10,4 +10,8 @@ public class CommentViewModel
     [Required]
     [StringLength(500)]
     public string Content { get; set; }
+    public string Username { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+
 }

@@ -1,9 +1,13 @@
 @model List<ArticleModel>
 
 <h2>Articles</h2>
-<div class="row">
-    <a asp-action="Aggregate" asp-controller="Article" class="col-12  col-lg-4 btn btn-danger">Aggregate</a>
-</div>
+@if ((bool?)ViewData["IsAdmin"] == true)
+{
+    <div class="row">
+        <a asp-action="Aggregate" asp-controller="Article" class="col-12  col-lg-4 btn btn-danger">Aggregate</a>
+    </div>
+}
+
 
 @if (Model !=null )
 {
