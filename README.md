@@ -1,5 +1,6 @@
 #NewsWise - A news aggregation platform
-#Introduction NewsWise is an innovative news aggregation platform designed to procure news items from
+
+NewsWise is an innovative news aggregation platform designed to procure news items from
 a wide range of English-language sources, distill the core content, and assess its "positivity". 
 The platform is secure, and user-friendly, and gives users the ability to see news items rated according 
 to a configurable "positivity" metric. With NewsWise, users can personalize these metrics to align with
