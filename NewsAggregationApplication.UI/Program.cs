@@ -2,14 +2,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NewsAggregationApplication.Data;
 using NewsAggregationApplication.Data.Entities;
+using NewsAggregationApplication.UI.CommandHandlers.Article;
+using NewsAggregationApplication.UI.CQS.CommandHandlers.Comment;
 using NewsAggregationApplication.UI.Interfaces;
+using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Services;
 
 namespace NewsAggregationApplication.UI;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -31,13 +34,31 @@ public class Program
             .AddRoles<IdentityRole<Guid>>() 
             .AddEntityFrameworkStores<NewsDbContext>();
         
-       
-
+        
         builder.Services.AddScoped<IArticleService, ArticleService>();
         builder.Services.AddScoped<ILikeService,LikeService>();
         builder.Services.AddScoped<IBookmarkService, BookmarkService>();
-
+        builder.Services.AddScoped<ICommentService, CommentService>();
+        builder.Services.AddScoped<IAccountService, AccountService>();
+        builder.Services.AddScoped<IImageExtractor, ImageExtractor>();
+        builder.Services.AddScoped<IContentScraper, ContentScraper>();
+        builder.Services.AddScoped<ArticleMapper>();
+        builder.Services.AddScoped<LikeMapper>();
+        builder.Services.AddScoped<BookmarkMapper>();
+        builder.Services.AddScoped<CommentMapper>();
+        
+        
+        builder.Services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(
+                typeof(AddCommentCommandHandler).Assembly));
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+            await accountService.CreateRoles(scope.ServiceProvider);
+        }
+        
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())

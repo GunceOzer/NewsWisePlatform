@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ServiceModel.Syndication;
 
 namespace NewsAggregationApplication.Data.Entities;
 
@@ -9,7 +10,7 @@ public class Article
 
     public string Description { get; set; }
     public string Title { get; set; }
-    public string? Content { get; set; }
+    public string Content { get; set; }
     public string SourceUrl { get; set; }
     public DateTime PublishedDate { get; set; }
     public float? PositivityScore { get; set; }

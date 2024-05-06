@@ -1,0 +1,9 @@
+@model EditCommentViewModel
+
+<form asp-action="EditComment" asp-controller="Comment" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ArticleId" />
+    <textarea asp-for="Content"></textarea>
+    <button type="submit">Save</button>
+</form>

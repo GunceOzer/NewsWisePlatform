@@ -1,71 +1,161 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model NewsAggregationApplication.UI.Models.ArticleModel
+
 
 <article>
     <header>
         <h1>@Model.Title</h1>
-            <p>@Html.Raw(Model.Description)</p>
-            <p>@Model.Content</p>
-        <p>Published on @Model.PublicationDate.ToString("MMMM dd, yyyy")</p>
+        <p>@Html.Raw(Model.Description)</p>
+        <p>@Html.Raw(Model.Content)</p>
+        <img src="@Model.UrlToImage" alt="Article image"/>
+        <p>Published on @Model.PublishedDate.ToString("MMMM dd, yyyy")</p>
         <p>Source: <a href="@Model.SourceUrl" target="_blank">@Model.SourceUrl</a></p>
     </header>
     
     <section class="content">
-         @if (User.Identity.IsAuthenticated)
-                {
-                    <!-- Like and Unlike buttons -->
-                    @using (Html.BeginForm("Like", "Like", new { articleId = Model.Id }, FormMethod.Post))
-                    {
-                        <button type="submit" class="btn btn-success">Like</button>
-                    }
+        @if (User.Identity.IsAuthenticated)
+        {
+            <!-- Like and Unlike buttons -->
+            @using (Html.BeginForm("Like", "Like", new { articleId = Model.Id }, FormMethod.Post))
+            {
+                <button type="submit" class="btn btn-success">Like</button>
+            }
         
-                    @using (Html.BeginForm("Unlike", "Like", new { articleId = Model.Id }, FormMethod.Post))
-                    {
-                        <button type="submit" class="btn btn-warning">Unlike</button>
-                    }
+            @using (Html.BeginForm("Unlike", "Like", new { articleId = Model.Id }, FormMethod.Post))
+            {
+                <button type="submit" class="btn btn-warning">Unlike</button>
+            }
                   
-                }
-                  <span>@Model.LikesCount Likes</span>
+        }
+        <span>@Model.LikesCount Likes</span>
         <p>@Html.Raw(Model.Content)</p>
     </section>
     @if (User.Identity.IsAuthenticated)
-        {
-            <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@Model.Id" method="post">
-                @if (Model.IsBookmarked)
-                {
-                    <button type="submit" class="btn btn-info"><i class="fas fa-bookmark"></i> Unbookmark</button>
-                }
-                else
-                {
-                    <button type="submit" class="btn btn-outline-info"><i class="far fa-bookmark"></i> Bookmark</button>
-                }
-            </form>
-        }
-
-    @if (Model.Comments != null && Model.Comments.Any())
     {
-        <section class="comments">
-            <h3>Comments</h3>
+        <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@Model.Id" method="post">
+            @if (Model.IsBookmarked)
+            {
+                <button type="submit" class="btn btn-info"><i class="fas fa-bookmark"></i> Unbookmark</button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-outline-info"><i class="far fa-bookmark"></i> Bookmark</button>
+            }
+        </form>
+    }
+   
+    <section>
+        <h3>Comments</h3>
+        @if (Model.Comments.Any())
+        {
             @foreach (var comment in Model.Comments)
             {
                 <div class="comment">
+                    <strong>@comment.FullName</strong> says:
                     <p>@comment.Content</p>
-                    <footer>
-                        <p>Comment by @comment.Username on @comment.CreatedAt.ToString("MMMM dd, yyyy")</p>
-                    </footer>
+                    <small>@comment.CreatedAt.ToString("g")</small>
+                    @{
+                        var currentUserID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        bool userIsAdmin = User.IsInRole("Admin");
+                        var userIsAuthor = comment.UserId.ToString().Equals(currentUserID, StringComparison.OrdinalIgnoreCase);
+                    }
+                                        
+                    @if (userIsAdmin || userIsAuthor)
+                    {
+                        <div class="button-group">
+                        <button type="button" class="edit-comment-button btn btn-secondary btn-sm">Edit</button>
+                        <div class="edit-comment-form" style="display: none;">
+                            <form asp-action="EditComment" asp-controller="Comment" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@comment.Id" />
+                                <input type="hidden" name="ArticleId" value="@Model.Id" />
+                                <textarea name="Content" class="form-control">@comment.Content</textarea>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="cancel-edit-button btn btn-secondary">Cancel</button>
+                            </form>
+                        </div>
+                        
+                        <form asp-action="DeleteComment" asp-controller="Comment" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="articleId" value="@Model.Id" />
+                                                    <input type="hidden" name="commentId" value="@comment.Id" />
+                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                                </form>
+                        </div>
+                    }
+                   
+                    
                 </div>
+                    
             }
-        </section>
-    }
-
-    @if (User.Identity.IsAuthenticated)
-    {
-        <form asp-action="AddComment" asp-controller="Article" method="post">
-            <div class="form-group">
-                <label for="commentContent">Add a comment:</label>
-                <textarea id="commentContent" name="Content" class="form-control"></textarea>
-                <input type="hidden" name="ArticleId" value="@Model.Id" />
-            </div>
-            <button type="submit" class="btn btn-primary">Submit Comment</button>
-        </form>
-    }
+        }
+        
+        else
+        {
+            <p>No comments yet. Be the first to comment!</p>
+        }
+        
+        @if (User.Identity.IsAuthenticated)
+        {
+            <form asp-action="AddComment" asp-controller="Comment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="articleId" value="@Model.Id" />
+                <div class="form-group">
+                    <label for="content">Add a Comment</label>
+                    <textarea id="content" name="content" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Post Comment</button>
+            </form>
+        }
+        else
+        {
+            <p><a href="@Url.Action("Login", "Account")">Log in</a> to post a comment.</p>
+        }
+    </section>
+    
+    
 </article>
+
+@section Scripts {
+    <script>
+        // Function to show the edit form and hide the edit button
+        function showEditForm(editButton, contentElement, editForm) {
+            editButton.style.display = 'none'; // Hide the edit button
+            contentElement.style.display = 'none'; // Hide the content element
+            editForm.style.display = 'block'; // Show the edit form
+        }
+
+        // Function to hide the edit form and show the edit button and content element
+        function cancelEdit(editForm, contentElement, editButton) {
+            editForm.style.display = 'none'; // Hide the edit form
+            contentElement.style.display = 'block'; // Show the content element
+            editButton.style.display = 'inline-block'; // Show the edit button
+        }
+
+        // Event listeners for the edit buttons
+        document.querySelectorAll('.edit-comment-button').forEach(button => {
+            button.addEventListener('click', function() {
+                var commentContainer = this.closest('.comment'); // Gets the closest comment container
+                var contentElement = commentContainer.querySelector('p'); // Gets the paragraph that displays the comment content
+                var editForm = commentContainer.querySelector('.edit-comment-form'); // Ges the edit form inside the comment container
+
+                showEditForm(this, contentElement, editForm);
+            });
+        });
+
+        // Event listeners for the cancel buttons
+        document.querySelectorAll('.cancel-edit-button').forEach(button => {
+            button.addEventListener('click', function() {
+                var editForm = this.closest('.edit-comment-form'); // Gets the edit form
+                var commentContainer = this.closest('.comment'); // Gets the closest comment container
+                var contentElement = commentContainer.querySelector('p'); // Gets the paragraph that displays the comment content
+                var editButton = commentContainer.querySelector('.edit-comment-button'); // Gets the edit button inside the comment container
+
+                cancelEdit(editForm, contentElement, editButton);
+            });
+        });
+    </script>
+}
+
+}
