@@ -1,38 +1,30 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.Data;
 using NewsAggregationApplication.Data.Entities;
 using NewsAggregationApplication.UI.Commands;
 using NewsAggregationApplication.UI.Commands.Article;
+using NewsAggregationApplication.UI.CQS.Commands.Article;
+using NewsAggregationApplication.UI.CQS.Queries;
 using NewsAggregationApplication.UI.DTOs;
 using NewsAggregationApplication.UI.Interfaces;
 using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Queries.Article;
-
-
 namespace NewsAggregationApplication.UI.Services;
 
 public class ArticleService:IArticleService
 {
-    private readonly NewsDbContext _dbContext;
+    
     private readonly ILogger<ArticleService> _logger;
-    private readonly ArticleMapper _mapper;
-    private readonly IContentScraper _contentScraper;
-    private readonly IImageExtractor _imageExtractor;
-    private readonly IBookmarkService _bookmarkService;
     private readonly IMediator _mediator;
-
-
-    public ArticleService(NewsDbContext dbContext, ILogger<ArticleService> logger, ArticleMapper mapper, IImageExtractor imageExtractor, IContentScraper contentScraper, IBookmarkService bookmarkService, IMediator mediator)
+    
+    public ArticleService( ILogger<ArticleService> logger, IMediator mediator)
     {
-        _dbContext = dbContext;
         _logger = logger;
-        _mapper = mapper;
-        _imageExtractor = imageExtractor;
-        _contentScraper = contentScraper;
-        _bookmarkService = bookmarkService;
         _mediator = mediator;
+       
     }
     
     public async Task<IEnumerable<ArticleDto>> GetArticlesAsync(Guid? userId)
@@ -47,65 +39,39 @@ public class ArticleService:IArticleService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve articles.");
-            return new List<ArticleDto>(); // Return an empty list on failure
+            return new List<ArticleDto>(); 
         }
-        
-       
     }
 
     public async Task<ArticleDto?> GetArticlesByIdAsync(Guid id, Guid userId)
     {
         try
         {
-            _logger.LogInformation($"Fetching article with ID: {id}");
-            var article = await _dbContext.Articles
-                .Include(a => a.Likes)
-                .Include(a => a.Comments)
-                .ThenInclude(c => c.User)
-                .SingleOrDefaultAsync(a => a.Id == id);
-
-            if (article == null)
-            {
-                _logger.LogWarning($"Article with ID: {id} not found.");
-                return null;
-            }
-
-            _logger.LogInformation($"Article with ID: {id} retrieved successfully.");
-            //working after this line is added new
-            //return _mapper.ArticleToArticleDto(article);
-            var isBookmarked = await _dbContext.Bookmarks.AnyAsync(b => b.ArticleId == id && b.UserId == userId);
-
-            var articleDto = _mapper.ArticleToArticleDto(article);
-            articleDto.IsBookmarked = isBookmarked;
-            _logger.LogInformation($"Article with ID: {id} retrieved successfully.");
-            return articleDto;
+            var getArticlesById = new GetArticleByIdQuery { ArticleId = id, UserId = userId };
+            return await _mediator.Send(getArticlesById);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error while retrieving article with ID: {id}.");
+            _logger.LogError(ex,$"Error occured while getting the article");
             return null;
         }
     }
 
-    public async Task AggregateFromSourceAsync(IEnumerable<string> rssLinks,CancellationToken cancellationToken)
+    public async Task AggregateFromSourceAsync(CancellationToken cancellationToken)
     {
-       
-        foreach (var rssLink in rssLinks)
+        try
         {
-            try
-            {
-                var feed = await _mediator.Send(new FetchRssFeedQuery { Url = rssLink }, cancellationToken);
-                await _mediator.Send(new InitializeArticlesByRssCommand { RssData = feed.Items }, cancellationToken);
-                
-                
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error processing RSS link {rssLink}");
-            }
+            await _mediator.Send(new AggregateArticlesCommand(), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while aggregating articles from source.");
         }
         
+        
     }
+   
+
 
     public async Task<bool> DeleteArticleAsync(Guid id)
     {
@@ -122,27 +88,36 @@ public class ArticleService:IArticleService
             return false;
         }
 
-        /*try
-        {
-            var article = await _dbContext.Articles.FindAsync(id);
-            if (article == null)
-            {
-                _logger.LogWarning($"Article with ID: {id} not found for deletion.");
-                return false;
-            }
+       
+    }
 
-            _dbContext.Articles.Remove(article);
-            await _dbContext.SaveChangesAsync();
-            _logger.LogInformation($"Article with ID: {id} successfully deleted.");
-            return true;
+    public async Task<IEnumerable<ArticleDto>> GetSortedArticlesByPositivityAsync(Guid? userId, bool sortByPositive)
+    {
+        try
+        {
+            var query = new GetSortedArticlesByPositivityQuery { UserId = userId, SortByPositive = sortByPositive };
+            return await _mediator.Send(query);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error while deleting article with ID: {id}.");
-            return false;
-        }*/
+            _logger.LogError(ex, $"Error getting the sorted articles by positivity");
+            return Enumerable.Empty<ArticleDto>();
+
+        }
     }
-    
-    
+
+    public async Task<IEnumerable<ArticleDto>> GetSortedArticlesByDate(Guid? userId, bool sortByNewest)
+    {
+        try
+        {
+            var query = new GetNewestArticlesQuery() { UserId = userId, SortByNewest = sortByNewest };
+            return await _mediator.Send(query);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,"Error getting the sorted articles by date");
+            return Enumerable.Empty<ArticleDto>();
+        }
+    }
     
 }

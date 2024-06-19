@@ -1,126 +1,97 @@
+using System.ServiceModel.Syndication;
 using System.Text;
+using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.UI.Interfaces;
+using NReadability;
 
 namespace NewsAggregationApplication.UI.Services;
 
 public class ContentScraper:IContentScraper
 {
     private readonly ILogger<ContentScraper> _logger;
-    
+    private readonly HttpClient _httpClient;
 
-    public ContentScraper(ILogger<ContentScraper> logger)
+
+    public ContentScraper(ILogger<ContentScraper> logger, HttpClient httpClient)
     {
         _logger = logger;
+        _httpClient = httpClient;
     }
 
     public async Task<string> ScrapeWebPage(string url)
     {
-        /*try
-        {
-            var web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(url);
 
-            // XPath is for selecting paragraphs
-            var paragraphs = doc.DocumentNode.SelectNodes("//section[@data-component='text-block']//p");
-
-            if (paragraphs != null)
-            {
-                StringBuilder content = new StringBuilder();
-                foreach (var paragraph in paragraphs)
-                {
-                    // Check if paragraph has text and is not only white spaces
-                    if (!string.IsNullOrWhiteSpace(paragraph.InnerText))
-                    {
-                        content.AppendLine(paragraph.InnerText.Trim());
-                    }
-                }
-                var scrapedContent = content.ToString();
-                _logger.LogInformation("Scraped content: {Content}", scrapedContent);
-                return scrapedContent;
-            }
-            else
-            {
-                _logger.LogWarning("No paragraphs found at {URL}", url);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while scraping the webpage at {URL}", url);
-        }
-
-        return string.Empty;
-        */
+        string content = string.Empty;
         try
         {
-            var web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(url);
-            var paragraphs = doc.DocumentNode.SelectNodes("//section[@data-component='text-block']//p");
-
-            if (paragraphs != null)
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
             {
-                StringBuilder content = new StringBuilder();
-                foreach (var paragraph in paragraphs)
+                string html = await response.Content.ReadAsStringAsync();
+                HtmlDocument document = new HtmlDocument();
+                document.LoadHtml(html);
+
+                // Adjusting to the correct node based on the structure shared
+                HtmlNode contentNode = document.DocumentNode.SelectSingleNode(
+                    "//div[@id='article-body' or @class='entry-content' or @class='g-post-content  js-post-content' or @class='caas-body'] ");
+
+                if (contentNode != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(paragraph.InnerText))
+                    foreach (HtmlNode paragraph in contentNode.SelectNodes(".//p"))
                     {
-                        content.AppendLine(paragraph.InnerText.Trim());
+                        string paragraphText = paragraph.InnerText.Trim();
+                        if (!string.IsNullOrEmpty(paragraphText))
+                        {
+                            content += paragraphText +
+                                       "<br><br>"; // Adding HTML line breaks between paragraphs for readability
+                        }
                     }
                 }
-                _logger.LogInformation($"Successfully scraped content from URL: {url}");
-                return content.ToString();
+                else
+                {
+                    _logger.LogWarning($"No article body found at URL: {url}");
+                }
             }
             else
-            {
-                _logger.LogWarning($"No paragraphs found at URL: {url}");
-                return string.Empty;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error occurred while scraping the webpage at URL: {url}");
-            return string.Empty;
-        }
-
-    }
-    /*public async Task<string> ScrapeWebPage(string url)
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError($"Failed to retrieve content from {url}. Status code: {response.StatusCode}");
-                return string.Empty;
             }
-
-            var html = await response.Content.ReadAsStringAsync();
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            // Example: Getting paragraphs from a section that might contain article content.
-            // This XPath might need to be adjusted depending on the structure of the HTML page.
-            var paragraphs = doc.DocumentNode.SelectNodes("//div[contains(@class, 'article-body')]//p");
-
-            if (paragraphs == null)
-            {
-                _logger.LogWarning($"No paragraphs found at {url}");
-                return string.Empty;
-            }
-
-            var contentBuilder = new System.Text.StringBuilder();
-            foreach (var paragraph in paragraphs)
-            {
-                contentBuilder.AppendLine(paragraph.InnerText.Trim());
-            }
-
-            return contentBuilder.ToString();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error occurred while scraping the webpage at {url}");
-            return string.Empty;
+            _logger.LogError(ex, $"An error occurred while scraping content from {url}");
         }
-    }*/
+
+        return content;
+
+    }
+    
+    public string CleanDescription(SyndicationItem item)
+    {
+        if (item.Summary != null)
+        {
+            string description = item.Summary.Text;
+            // Regular expression to match all <img> tags
+            string imgTagPattern = @"<img[^>]*?>";
+            // Regular expression to match YouTube <iframe> tags
+            string youtubeIframePattern = @"<iframe[^>]+?youtube\.com[^>]*?>.*?</iframe>";
+            // Regular expression to remove everything after "Continue reading"
+            string continueReadingPattern = @"<div>\s*Continue reading.*";
+
+            // Remove all <img> tags and YouTube iframes from description
+            string cleanedDescription = Regex.Replace(description, imgTagPattern, string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            cleanedDescription = Regex.Replace(cleanedDescription, youtubeIframePattern, string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            // Remove all content following "Continue reading"
+            cleanedDescription = Regex.Replace(cleanedDescription, continueReadingPattern, string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            
+            return cleanedDescription;
+        }
+        return string.Empty;
+        
+        
+       
+    }
+
 }

@@ -5,8 +5,9 @@ namespace NewsAggregationApplication.UI.Interfaces;
 
 public interface ICommentService
 {
-    public Task<CommentDto> AddCommentAsync(Guid articleId, Guid userId, string content,CancellationToken cancellationToken);
-    public Task<List<CommentDto>> GetCommentsByArticleIdAsync(Guid articleId);
-   public Task<bool> EditCommentAsync(Guid commentId, Guid userId, string content, bool isAdmin);
-    public Task<bool> DeleteCommentAsync(Guid commentId, Guid userId, bool isAdmin);
+   public  Task<bool> AddCommentAsync(CommentDto commentDto);
+    public Task<IEnumerable<CommentDto>> GetCommentsByArticleIdAsync(Guid articleId);
+    public Task<bool> EditCommentAsync(CommentDto commentDto);
+  
+    public Task<bool> DeleteCommentAsync(Guid commentId);
 }

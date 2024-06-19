@@ -4,5 +4,5 @@ namespace NewsAggregationApplication.UI.Interfaces;
 
 public interface IImageExtractor
 {
-    public string ExtractImageUrl(SyndicationItem item);
+    public Task<string> ExtractImageUrl(SyndicationItem item);
 }

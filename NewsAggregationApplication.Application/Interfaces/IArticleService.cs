@@ -7,10 +7,13 @@ public interface IArticleService
 {
     public Task<IEnumerable<ArticleDto>> GetArticlesAsync(Guid? userId);
     public Task<ArticleDto?> GetArticlesByIdAsync(Guid id , Guid userId);
-    public Task AggregateFromSourceAsync(IEnumerable<string> rssLinks, CancellationToken cancellationToken);
+    public Task AggregateFromSourceAsync( CancellationToken cancellationToken);
     public Task<bool> DeleteArticleAsync(Guid id);
+    Task<IEnumerable<ArticleDto>> GetSortedArticlesByPositivityAsync(Guid? userId, bool sortByPositive);
 
-    //public Task<List<ArticleDto>> GetArticlesWithBookmarkStatus(Guid userId);
-    
+    Task<IEnumerable<ArticleDto>> GetSortedArticlesByDate(Guid? userId, bool sortByNewest);
+
+
+
 
 }

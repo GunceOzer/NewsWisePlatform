@@ -1,5 +1,6 @@
 using System.ServiceModel.Syndication;
 using System.Xml.Linq;
+using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.UI.Interfaces;
 
@@ -14,21 +15,8 @@ public class ImageExtractor:IImageExtractor
         _logger = logger;
     }
 
-    public string ExtractImageUrl(SyndicationItem item)
+    public async Task<string>ExtractImageUrl(SyndicationItem item)
     {
-        /*var media = "http://search.yahoo.com/mrss/";
-        var imageUrl = item.ElementExtensions
-            .Where(ext => ext.OuterNamespace == media)
-            .Select(ext => {
-                var element = ext.GetObject<XElement>();
-                if (element.Name.LocalName == "content" || element.Name.LocalName == "thumbnail")
-                {
-                    return element.Attribute("url")?.Value;
-                }
-                return null;
-            })
-            .FirstOrDefault(url => !string.IsNullOrEmpty(url));
-        return imageUrl;*/
         try
         {
             var media = "http://search.yahoo.com/mrss/";
@@ -41,7 +29,7 @@ public class ImageExtractor:IImageExtractor
                     {
                         return element.Attribute("url")?.Value;
                     }
-                    return null;
+                    return String.Empty;
                 })
                 .FirstOrDefault(url => !string.IsNullOrEmpty(url));
 
@@ -53,13 +41,14 @@ public class ImageExtractor:IImageExtractor
             else
             {
                 _logger.LogWarning("No image URL found in the syndication item.");
-                return null;
+                return String.Empty;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to extract image URL from the syndication item.");
-            return null;
+            return String.Empty;
         }
     }
+   
 }

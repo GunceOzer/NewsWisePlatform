@@ -8,17 +8,12 @@ namespace NewsAggregationApplication.UI.Services;
 
 public class AccountService:IAccountService
 {
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-    private readonly UserManager<User> _userManager;
-    private readonly ILogger<AccountService> _logger;
+   
 
-    public AccountService(RoleManager<IdentityRole<Guid>> roleManager, UserManager<User> userManager, ILogger<AccountService> logger)
+    public AccountService()
     {
-        _roleManager = roleManager;
-        _userManager = userManager;
-        _logger = logger;
+        
     }
-    
     public async Task CreateRoles(IServiceProvider serviceProvider)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
@@ -29,31 +24,14 @@ public class AccountService:IAccountService
 
         foreach (var roleName in roleNames)
         {
-            
-            try
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
             {
-                var roleExist = await _roleManager.RoleExistsAsync(roleName);
-                if (!roleExist)
+                roleResult = await roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
+                if (!roleResult.Succeeded)
                 {
-                    _logger.LogInformation($"Creating role: {roleName}");
-                    roleResult = await _roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
-                    if (roleResult.Succeeded)
-                    {
-                        _logger.LogInformation($"Role {roleName} created successfully.");
-                    }
-                    else
-                    {
-                        _logger.LogError($"Error creating role {roleName}: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
-                    }
+                    throw new Exception($"Failed to create role {roleName}");
                 }
-                else
-                {
-                    _logger.LogInformation($"Role {roleName} already exists. No action taken.");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Exception occurred while creating role {roleName}.");
             }
         }
 
@@ -63,7 +41,6 @@ public class AccountService:IAccountService
             Email = "admin@admin.com",
             FullName = "admin",
             EmailConfirmed = true,
-            
         };
 
         string userPWD = "Admin.123";
@@ -78,6 +55,7 @@ public class AccountService:IAccountService
             }
         }
     }
-    
+
    
+    
 }
