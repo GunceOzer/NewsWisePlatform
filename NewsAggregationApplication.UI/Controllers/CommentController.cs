@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NewsAggregationApplication.Data.Entities;
+using NewsAggregationApplication.UI.DTOs;
 using NewsAggregationApplication.UI.Interfaces;
 using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Models;
@@ -28,38 +29,44 @@ public class CommentController : Controller
 
 
     // GET
-    public IActionResult Index()
+    /*public IActionResult Index()
     {
         return View();
-    }
+    }*/
     [HttpPost]
     public async Task<IActionResult> AddComment(Guid articleId, CommentViewModel model)
     {
-       
-        
-        var userId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-        if (userId == null)
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized();
         }
+
         try
         {
-            var commentDto = await _commentService.AddCommentAsync(articleId, userId, model.Content,CancellationToken.None);
-            _logger.LogInformation("Comment added.");
-            if (commentDto == null)
+            var commentDto = _commentMapper.CommentModelToCommentDto(model);
+            commentDto.ArticleId = articleId;
+            commentDto.UserId = Guid.Parse(userId);
+            commentDto.CreatedAt = DateTime.UtcNow;
+
+            
+            var result = await _commentService.AddCommentAsync(commentDto);
+            if (result)
             {
-                return BadRequest("Unable to add comment.");
+                _logger.LogInformation("Comment added.");
+                return RedirectToAction("Details", "Article", new { id = articleId });
             }
-            return RedirectToAction("Details", "Article", new { id = articleId });
+
+            return BadRequest("Unable to add comment.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add comment.");
             return RedirectToAction("Details", "Article", new { id = articleId, error = "Failed to add comment" });
         }
-    }
 
+        
+    }
 
 
     [HttpPost]
@@ -70,32 +77,25 @@ public class CommentController : Controller
         if (!ModelState.IsValid)
         {
             TempData["Error"] = "There was a problem with your submission.";
+            return RedirectToAction("Details","Article,new {id = articleId}");
+        }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var commentDto = _commentMapper.EditCommentViewModelToCommentDto(model);
+        commentDto.UserId = Guid.Parse(userId);
+
+        var success = await _commentService.EditCommentAsync(commentDto);
+
+        if (success)
+        {
+            _logger.LogInformation("Comment edited successfully.");
             return RedirectToAction("Details", "Article", new { id = articleId });
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        bool isAdmin = User.IsInRole("Admin");
-
-        var success = await _commentService.EditCommentAsync(model.Id, new Guid(userId), model.Content, isAdmin);
-
-        try{
-            if (success)
-            {
-                _logger.LogInformation("Comment edited successfully.");
-                return RedirectToAction("Details", "Article", new { id = articleId });
-            }
-            else
-            {
-                TempData["Error"] = "Comment could not be edited.";
-                _logger.LogWarning("Failed to edit comment.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error editing comment.");
-            TempData["Error"] = "An error occurred while editing the comment.";
-        }
+        _logger.LogWarning("Failed to edit comment.");
+        TempData["Error"] = "Comment could not be edited.";
         return RedirectToAction("Details", "Article", new { id = articleId });
+        
     }
 
    
@@ -103,11 +103,12 @@ public class CommentController : Controller
     [Authorize]
     public async Task<IActionResult> DeleteComment(Guid articleId, Guid commentId)
     {
-        var userId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         bool isAdmin = User.IsInRole("Admin");
+
         try
         {
-            var success = await _commentService.DeleteCommentAsync(commentId, userId, isAdmin);
+            var success = await _commentService.DeleteCommentAsync(commentId);
             if (success)
             {
                 _logger.LogInformation("Comment successfully deleted.");
@@ -123,8 +124,8 @@ public class CommentController : Controller
             _logger.LogError(ex, "Error deleting comment.");
             TempData["Error"] = "An error occurred while deleting the comment.";
         }
+
         return RedirectToAction("Details", "Article", new { id = articleId });
-    
     }
 }
     

@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NewsAggregationApplication.UI.DTOs;
 using NewsAggregationApplication.UI.Interfaces;
+using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Models;
 
 namespace NewsAggregationApplication.UI.Controllers;
@@ -11,67 +13,78 @@ public class LikeController : Controller
     
     private readonly ILikeService _likeService;
     private readonly ILogger<LikeController> _logger;
+    private readonly LikeMapper _likeMapper;
 
 
-    public LikeController(ILikeService likeService, ILogger<LikeController> logger)
+    public LikeController(ILikeService likeService, ILogger<LikeController> logger, LikeMapper likeMapper)
     {
         _likeService = likeService;
         _logger = logger;
-    }
-    // GET
-    public IActionResult Index()
-    {
-        return View();
+        _likeMapper = likeMapper;
     }
     
-    [Authorize]
+    
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> Like(LikeModel model)
     {
-     
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
         try
         {
-            var result = await _likeService.LikeArticleAsync(model.ArticleId, new Guid(userId));
+            model.UserId = Guid.Parse(userId);
+
+            var likeDto = _likeMapper.LikeModelToLikeDto(model);
+
+            var result = await _likeService.LikeArticleAsync(likeDto);
             if (result)
             {
-                _logger.LogInformation("Article liked successfully.");
-                return RedirectToAction("Index", "Article");
+                _logger.LogInformation("Article liked.");
+                return RedirectToAction("Details", "Article", new { id = model.ArticleId });
             }
-            else
-            {
-                _logger.LogWarning("Article already liked.");
-            }
+
+            return BadRequest("Unable to like article.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error liking article.");
+            _logger.LogError(ex, "Failed to like article.");
+            return RedirectToAction("Details", "Article", new { id = model.ArticleId, error = "Failed to like article" });
         }
-        return RedirectToAction("Index", "Article");
     }
-    [Authorize]
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> Unlike(LikeModel model)
     {
-       var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
         try
         {
-            var result = await _likeService.UnlikeArticleAsync(model.ArticleId, new Guid(userId));
+            model.UserId = Guid.Parse(userId);
+            var likeDto = _likeMapper.LikeModelToLikeDto(model);
+
+            var result = await _likeService.UnlikeArticleAsync(likeDto);
             if (result)
             {
-                _logger.LogInformation("Article unliked successfully.");
-                return RedirectToAction("Index", "Article");
+                _logger.LogInformation("Article unliked.");
+                return RedirectToAction("Details", "Article", new { id = model.ArticleId });
             }
-            else
-            {
-                _logger.LogWarning("Article had not been liked.");
-            }
+
+            return BadRequest("Unable to unlike article.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error unliking article.");
+            _logger.LogError(ex, "Failed to unlike article.");
+            return RedirectToAction("Details", "Article", new { id = model.ArticleId, error = "Failed to unlike article" });
         }
-        return RedirectToAction("Index", "Article");
-           
     }
 }
+    
+   

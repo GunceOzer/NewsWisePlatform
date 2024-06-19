@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NewsAggregationApplication.UI.DTOs;
 using NewsAggregationApplication.UI.Interfaces;
 using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Models;
@@ -50,10 +51,29 @@ public class BookmarkController : Controller
     
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> Bookmark(Guid articleId)
+    public async Task<IActionResult> Bookmark([FromBody] BookmarkDto bookmarkDto)//Guid articleId
     {
-       
+        if (bookmarkDto == null)
+        {
+            return BadRequest("Bookmark data is null.");
+        }
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        bookmarkDto.UserId = Guid.Parse(userId);
+        var result = await _bookmarkService.BookmarkArticleAsync(bookmarkDto);
+
+        if (result)
+        {
+            return Ok();
+        }
+
+        return StatusCode(500, "A problem happened while handling your request.");
+        /*var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized();
@@ -76,7 +96,7 @@ public class BookmarkController : Controller
             _logger.LogError(ex, $"Error bookmarking article {articleId} by user {userId}.");
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index));*/
     }
 
     [Authorize]
@@ -114,7 +134,7 @@ public class BookmarkController : Controller
     [HttpPost]
     public async Task<IActionResult> ToggleBookmark(Guid articleId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        /*var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized();
@@ -139,7 +159,40 @@ public class BookmarkController : Controller
             _logger.LogError(ex, $"Error toggling bookmark for article {articleId}.");
         }
 
-        return RedirectToAction("Index", "Article"); 
+        return RedirectToAction("Index", "Article"); */
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var isBookmarked = await _bookmarkService.IsArticleBookmarkedByUser(articleId, Guid.Parse(userId));
+            if (isBookmarked)
+            {
+                await _bookmarkService.RemoveBookmarkAsync(articleId, Guid.Parse(userId));
+                _logger.LogInformation($"Bookmark removed for article {articleId}.");
+            }
+            else
+            {
+                var bookmarkDto = new BookmarkDto
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = Guid.Parse(userId),
+                    ArticleId = articleId,
+                    IsBookmarked = isBookmarked
+                };
+                await _bookmarkService.BookmarkArticleAsync(bookmarkDto);
+                _logger.LogInformation($"Article {articleId} bookmarked.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error toggling bookmark for article {articleId}.");
+        }
+
+        return RedirectToAction("Index", "Article");
     }
     
     
