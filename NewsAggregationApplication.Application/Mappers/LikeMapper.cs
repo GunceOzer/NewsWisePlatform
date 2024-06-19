@@ -9,7 +9,8 @@ namespace NewsAggregationApplication.UI.Mappers;
 public partial class LikeMapper
 {
     
-    public partial LikeModel LikeDtoToLikeModel(LikeDto dto);
-    
     public partial LikeDto LikeToLikeDto(Like like);
+    public partial Like LikeDtoToLike(LikeDto likeDto);
+    public partial LikeModel LikeDtoToLikeModel(LikeDto likeDto);
+    public partial LikeDto LikeModelToLikeDto(LikeModel likeModel);
 }

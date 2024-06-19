@@ -9,9 +9,6 @@ namespace NewsAggregationApplication.UI.Mappers;
 public partial class BookmarkMapper
 {
     //[MapProperty(nameof(BookmarkDto.IsBookmarked), nameof(ArticleModel.IsBookmarked))]
-    //public partial BookmarkModel BookmarkDtoToBookmarkModel(BookmarkDto bookmarkDto);
-    
-    [MapProperty(nameof(BookmarkDto.IsBookmarked), nameof(ArticleModel.IsBookmarked))]
-    public partial ArticleModel BookmarkDtoToArticleModel(BookmarkDto bookmarkDto);
+    public partial Bookmark BookmarkDtoToBookmark(BookmarkDto bookmarkDto);
     public partial BookmarkDto BookmarkToBookmarkDto(Bookmark bookmark);
 }

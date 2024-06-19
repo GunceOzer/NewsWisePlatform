@@ -11,7 +11,7 @@ public partial class CommentMapper
 
     public partial CommentViewModel CommentDtoToCommentModel(CommentDto commentDto);
 
-    public  CommentDto CommentModelToCommentDto(Comment comment)
+    public  CommentDto CommentToCommentDto(Comment comment)
     {
         return new CommentDto
         {
@@ -19,7 +19,15 @@ public partial class CommentMapper
             Content = comment.Content,
             CreatedAt = comment.CreatedAt,
             FullName = comment.User.FullName, 
-            UserId = comment.UserId
+            UserId = comment.UserId,
+            ArticleId = comment.ArticleId
         };
     }
+    public partial Comment CommentDtoToComment(CommentDto commentDto);
+    public partial CommentDto CommentModelToCommentDto(CommentViewModel commentViewModel);
+
+    public partial void UpdateCommentFromDto(CommentDto commentDto, Comment comment);
+    public partial CommentDto EditCommentViewModelToCommentDto(EditCommentViewModel editCommentViewModel);
+
+    
 }
