@@ -21,21 +21,21 @@ public class UnlikeArticleAsyncCommandHandler:IRequestHandler<UnlikeArticleAsync
     {
         try
         {
-            var like = await _dbContext.Likes.FirstOrDefaultAsync(l => l.ArticleId == request.ArticleId && l.UserId == request.UserId);
+            var like = await _dbContext.Likes.FirstOrDefaultAsync(l => l.ArticleId == request.LikeDto.ArticleId && l.UserId == request.LikeDto.UserId);
             if (like == null)
             {
-                _logger.LogInformation("Attempt to unlike an article that was not previously liked: ArticleID={articleId}, UserID={userId}",request.ArticleId,request.UserId);
+                _logger.LogInformation("Attempt to unlike an article that was not previously liked: ArticleID={articleId}, UserID={userId}",request.LikeDto.ArticleId,request.LikeDto.UserId);
                 return false;
             }
 
             _dbContext.Likes.Remove(like);
             await _dbContext.SaveChangesAsync();
-            _logger.LogInformation("Article unliked successfully: ArticleID={articleId}, UserID={userId}",request.ArticleId,request.UserId);
+            _logger.LogInformation("Article unliked successfully: ArticleID={articleId}, UserID={userId}",request.LikeDto.ArticleId,request.LikeDto.UserId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to unlike article: ArticleID={articleId}, UserID={userId}",request.ArticleId,request.UserId);
+            _logger.LogError(ex, "Failed to unlike article: ArticleID={articleId}, UserID={userId}",request.LikeDto.ArticleId,request.LikeDto.UserId);
             return false;
         }
     }

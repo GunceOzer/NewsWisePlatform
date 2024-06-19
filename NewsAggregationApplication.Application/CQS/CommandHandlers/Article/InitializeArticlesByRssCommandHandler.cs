@@ -2,9 +2,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.Data;
-using NewsAggregationApplication.Data.Entities;
 using NewsAggregationApplication.UI.Commands;
 using NewsAggregationApplication.UI.Interfaces;
+using NewsAggregationApplication.UI.Queries.Article;
 
 namespace NewsAggregationApplication.UI.CommandHandlers.Article;
 
@@ -14,14 +14,18 @@ public class InitializeArticlesByRssCommandHandler : IRequestHandler<InitializeA
     private readonly ILogger<InitializeArticlesByRssCommandHandler> _logger;
     private readonly IContentScraper _contentScraper;
     private readonly IImageExtractor _imageExtractor;
+    private readonly ISentimentAnalysisService _sentimentAnalysisService;
+
 
     public InitializeArticlesByRssCommandHandler(NewsDbContext dbContext,
-        ILogger<InitializeArticlesByRssCommandHandler> logger, IContentScraper contentScraper, IImageExtractor imageExtractor)
+        ILogger<InitializeArticlesByRssCommandHandler> logger, IContentScraper contentScraper,
+        IImageExtractor imageExtractor, ISentimentAnalysisService sentimentAnalysisService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _contentScraper = contentScraper;
         _imageExtractor = imageExtractor;
+        _sentimentAnalysisService = sentimentAnalysisService;
     }
 
     public async Task Handle(InitializeArticlesByRssCommand command, CancellationToken cancellationToken)
@@ -35,37 +39,25 @@ public class InitializeArticlesByRssCommandHandler : IRequestHandler<InitializeA
                 continue;
             }
 
-            var sourceUrl = item.Links.FirstOrDefault()?.Uri.Host;
-            var source = await _dbContext.Sources.FirstOrDefaultAsync(s => s.Url == sourceUrl, cancellationToken);
-            if (source == null)
-            {
-                source = new Source { Id = Guid.NewGuid(), Url = sourceUrl, Name = sourceUrl };
-                _dbContext.Sources.Add(source);
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-
             var article = new Data.Entities.Article
             {
                 Id = Guid.NewGuid(),
                 Title = item.Title.Text,
-                Description = item.Summary.Text,
+                Description = _contentScraper.CleanDescription(item),
+                Content = await _contentScraper.ScrapeWebPage(articleUrl),
+                UrlToImage = await _imageExtractor.ExtractImageUrl(item),
                 PublishedDate = item.PublishDate.UtcDateTime,
                 SourceUrl = articleUrl,
-                SourceId = source.Id
+                SourceId = command.SourceId
             };
+
+            // Calculate the positivity score
+            article.PositivityScore = await _sentimentAnalysisService.AnalyzeSentimentAsync(article.Content);
+
             _dbContext.Articles.Add(article);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
-            // Extract image and scrape content
-            var content = await _contentScraper.ScrapeWebPage(articleUrl);
-            var imageUrl = _imageExtractor.ExtractImageUrl(item);
-
-            article.Content = content;
-            article.UrlToImage = imageUrl;
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Article initialized with content and image.");
         }
 
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Articles initialized with content and images.");
     }
 }

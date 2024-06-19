@@ -1,4 +1,4 @@
-/*using MediatR;
+using MediatR;
 using NewsAggregationApplication.UI.DTOs;
 
 namespace NewsAggregationApplication.UI.Queries.Article;
@@ -6,5 +6,6 @@ namespace NewsAggregationApplication.UI.Queries.Article;
 public class GetArticleByIdQuery:IRequest<ArticleDto>
 {
     public Guid ArticleId { get; set; }
+    public Guid UserId { get; set; }
 
-}*/
+}

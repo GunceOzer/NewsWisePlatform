@@ -26,7 +26,7 @@ public class ScrapeContentCommandHandler: IRequestHandler<ScrapeContentCommand>
         if (string.IsNullOrEmpty(content))
         {
             _logger.LogWarning($"No content found at URL: {command.Url}");
-            content = "Content not available"; // Default content
+            content = "Content not available"; 
         }
         var article = await _dbContext.Articles.FindAsync(command.ArticleId);
         if (article != null)

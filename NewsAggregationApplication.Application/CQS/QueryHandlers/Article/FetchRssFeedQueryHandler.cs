@@ -20,14 +20,15 @@ public class FetchRssFeedQueryHandler:IRequestHandler<FetchRssFeedQuery,Syndicat
         try
         {
             using var reader = XmlReader.Create(query.Url);
-            var feed = SyndicationFeed.Load(reader);
+            var feed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken);
             _logger.LogInformation($"RSS Feed successfully fetched from {query.Url}");
             return feed;
+           
         }
         catch (XmlException ex)
         {
             _logger.LogError(ex, $"Error parsing RSS Feed from {query.Url}");
-            return null; // Depending on your error handling policy, you might want to return null or a default instance instead of throwing
+            return null; 
         }
         catch (Exception ex)
         {

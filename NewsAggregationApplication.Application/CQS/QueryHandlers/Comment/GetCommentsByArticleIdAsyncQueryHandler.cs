@@ -8,7 +8,7 @@ using NewsAggregationApplication.UI.Mappers;
 
 namespace NewsAggregationApplication.UI.CQS.QueryHandlers.Comment;
 
-public class GetCommentsByArticleIdAsyncQueryHandler:IRequestHandler<GetCommentsByArticleIdAsyncQuery,List<CommentDto>>
+public class GetCommentsByArticleIdAsyncQueryHandler:IRequestHandler<GetCommentsByArticleIdAsyncQuery,IEnumerable<CommentDto>>//list
 {
     private readonly NewsDbContext _dbContext;
     private readonly ILogger<GetCommentsByArticleIdAsyncQueryHandler> _logger;
@@ -21,16 +21,18 @@ public class GetCommentsByArticleIdAsyncQueryHandler:IRequestHandler<GetComments
         _logger = logger;
     }
 
-    public async Task<List<CommentDto>> Handle(GetCommentsByArticleIdAsyncQuery request, CancellationToken cancellationToken)
+    
+    public async Task<IEnumerable<CommentDto>> Handle(GetCommentsByArticleIdAsyncQuery request, CancellationToken cancellationToken)
     {
         try
         {
             var comments = await _dbContext.Comments
                 .Where(c => c.ArticleId == request.ArticleId)
                 .Include(c => c.User)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            var commentDtos = comments.Select(c => _mapper.CommentModelToCommentDto(c)).ToList();
+           
+           var commentDtos = comments.Select(c => _mapper.CommentToCommentDto(c)).ToList();
             _logger.LogInformation($"Retrieved comments for ArticleID={request.ArticleId}");
             return commentDtos;
         }

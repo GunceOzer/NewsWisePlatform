@@ -1,9 +1,9 @@
 using MediatR;
+using NewsAggregationApplication.UI.DTOs;
 
 namespace NewsAggregationApplication.UI.CQS.Commands.Bookmark;
 
 public class BookmarkArticlesCommand:IRequest<bool>
 {
-    public Guid ArticleId { get; set; }
-    public Guid UserId { get; set; }
+    public BookmarkDto BookmarkDto { get; set; }
 }

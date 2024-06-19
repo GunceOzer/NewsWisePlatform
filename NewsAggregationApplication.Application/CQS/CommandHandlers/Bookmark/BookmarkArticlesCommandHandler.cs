@@ -18,33 +18,36 @@ public class BookmarkArticlesCommandHandler: IRequestHandler<BookmarkArticlesCom
 
     public async Task<bool> Handle(BookmarkArticlesCommand request, CancellationToken cancellationToken)
     {
-        
-            try
+        try
+        {
+            if (_dbContext.Bookmarks.Any(b =>
+                    b.ArticleId == request.BookmarkDto.ArticleId && b.UserId == request.BookmarkDto.UserId))
             {
-                if (_dbContext.Bookmarks.Any(b => b.ArticleId == request.ArticleId && b.UserId == request.UserId))
-                {
-                    _logger.LogInformation("Attempt to bookmark already bookmarked article: ArticleID={request.ArticleId}, UserID={request.UserId}");
-                    return false;
-                }
-
-                var bookmark = new Data.Entities.Bookmark
-                {
-                    Id = Guid.NewGuid(),
-                    ArticleId = request.ArticleId,
-                    UserId = request.UserId
-                };
-                _dbContext.Bookmarks.Add(bookmark);
-                await _dbContext.SaveChangesAsync();
-                _logger.LogInformation($"Article bookmarked successfully: ArticleID={request.ArticleId}, UserID={request.UserId}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error bookmarking article: ArticleID={request.ArticleId}, UserID={request.UserId}");
+                _logger.LogInformation(
+                    "Attempt to bookmark already bookmarked article: ArticleID={request.ArticleId}, UserID={request.UserId}");
                 return false;
             }
 
-        
+            var bookmark = new Data.Entities.Bookmark
+            {
+                Id = request.BookmarkDto.Id,
+                UserId = request.BookmarkDto.UserId,
+                ArticleId = request.BookmarkDto.ArticleId,
+            };
 
+            _dbContext.Bookmarks.Add(bookmark);
+            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation(
+                $"Article bookmarked successfully: ArticleID={request.BookmarkDto.ArticleId}, UserID={request.BookmarkDto.UserId}");
+            return true;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error bookmarking article with ID: {request.BookmarkDto.ArticleId}");
+            return false;
+
+
+        }
     }
 }

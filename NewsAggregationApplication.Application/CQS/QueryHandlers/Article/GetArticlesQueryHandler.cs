@@ -23,35 +23,8 @@ public class GetArticlesQueryHandler:IRequestHandler<GetArticlesQuery,IEnumerabl
 
     public async Task<IEnumerable<ArticleDto>> Handle(GetArticlesQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Fetching all articles with bookmark status.");
-
-        var articles = await _dbContext.Articles
-            .Include(a => a.Likes)
-            .Select(a => new {
-                a.Id,
-                a.Title,
-                a.Description,
-                Content = a.Content ?? "No content available", // Handling NULL content
-                a.PublishedDate,
-                a.UrlToImage,
-                LikesCount = a.Likes.Count,
-                IsBookmarked = request.UserId.HasValue && a.Bookmarks.Any(b => b.UserId == request.UserId.Value && b.ArticleId == a.Id) // Checking bookmarks safely
-            })
-            .ToListAsync(cancellationToken);
-
-        var articleDtos = articles.Select(x => new ArticleDto {
-            Id = x.Id,
-            Title = x.Title,
-            Description = x.Description,
-            Content = x.Content,
-            PublishedDate = x.PublishedDate,
-            UrlToImage = x.UrlToImage,
-            LikesCount = x.LikesCount,
-            IsBookmarked = x.IsBookmarked
-        }).ToList();
-
-        return articleDtos;
-        
+        var articles = await _dbContext.Articles.Include(a => a.Likes).Include(a => a.Bookmarks).ToListAsync(cancellationToken);
+        return articles.Select(_mapper.ArticleToArticleDto);
         
     }
 }

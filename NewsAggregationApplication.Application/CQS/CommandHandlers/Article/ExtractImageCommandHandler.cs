@@ -21,11 +21,11 @@ public class ExtractImageCommandHandler:IRequestHandler<ExtractImageCommand>
 
     public async Task Handle(ExtractImageCommand command, CancellationToken cancellationToken)
     {
-        var imageUrl = _imageExtractor.ExtractImageUrl(command.Item);
+        var imageUrl = await _imageExtractor.ExtractImageUrl(command.Item);
         if (string.IsNullOrEmpty(imageUrl))
         {
             _logger.LogWarning("No image URL extracted for Article ID: {ArticleId}", command.ArticleId);
-            imageUrl = " "; // Default image placeholder
+            imageUrl = " "; // Default image placeholder if there is not image
         }
         var article = await _dbContext.Articles.FindAsync(command.ArticleId);
         if (article != null)

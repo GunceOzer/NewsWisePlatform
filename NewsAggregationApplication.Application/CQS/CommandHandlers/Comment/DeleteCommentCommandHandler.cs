@@ -15,27 +15,26 @@ public class DeleteCommentCommandHandler:IRequestHandler<DeleteCommentCommand,bo
         _dbContext = dbContext;
         _logger = logger;
     }
-
     public async Task<bool> Handle(DeleteCommentCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var comment = await _dbContext.Comments.FindAsync(request.CommentId);
-            if (comment == null || (comment.UserId != request.UserId && !request.IsAdmin))
+            var comment = await _dbContext.Comments.FindAsync(new object[] { request.CommentId }, cancellationToken);
+            if (comment == null)
             {
-                _logger.LogWarning($"Attempt to delete non-existent or unauthorized comment: CommentID={request.CommentId}, UserID={request.UserId}, IsAdmin={request.IsAdmin}");
                 return false;
             }
 
             _dbContext.Comments.Remove(comment);
-            var result = await _dbContext.SaveChangesAsync();
-            _logger.LogInformation($"Comment deleted successfully: CommentID={request.CommentId}");
-            return result > 0;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to delete comment: CommentID={request.CommentId}");
+            _logger.LogError(ex, "Error deleting comment.");
             return false;
         }
     }
+
+   
 }
