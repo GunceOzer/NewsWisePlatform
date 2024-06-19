@@ -16,7 +16,7 @@
                 <p class="card-text">@Html.Raw(article.Description)</p>
                  @if (!string.IsNullOrEmpty(article.UrlToImage))
                 {
-                    <img src="@article.UrlToImage" alt="Article Image" />
+                    <img src="@article.UrlToImage" alt="Article Image" class="article-image"/>
                 }
                 <a href="@Url.Action("Details", "Article", new { id = article.Id })" class="btn btn-primary">Read more</a>
                 <form asp-action="ToggleBookmark" asp-controller="Bookmark" asp-route-articleId="@article.Id" method="post">

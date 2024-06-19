@@ -3,12 +3,13 @@
 @model NewsAggregationApplication.UI.Models.ArticleModel
 
 
+
 <article>
     <header>
         <h1>@Model.Title</h1>
-        <p>@Html.Raw(Model.Description)</p>
-        <p>@Html.Raw(Model.Content)</p>
-        <img src="@Model.UrlToImage" alt="Article image"/>
+        <img src="@Model.UrlToImage" alt="Article image"class="article-image"/>
+        <p class="content">@Html.Raw(Model.Content)</p>
+       
         <p>Published on @Model.PublishedDate.ToString("MMMM dd, yyyy")</p>
         <p>Source: <a href="@Model.SourceUrl" target="_blank">@Model.SourceUrl</a></p>
     </header>
@@ -16,20 +17,13 @@
     <section class="content">
         @if (User.Identity.IsAuthenticated)
         {
-            <!-- Like and Unlike buttons -->
-            @using (Html.BeginForm("Like", "Like", new { articleId = Model.Id }, FormMethod.Post))
-            {
-                <button type="submit" class="btn btn-success">Like</button>
-            }
-        
-            @using (Html.BeginForm("Unlike", "Like", new { articleId = Model.Id }, FormMethod.Post))
-            {
-                <button type="submit" class="btn btn-warning">Unlike</button>
-            }
+            var likeModel = new LikeModel{ ArticleId = Model.Id , UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier))};
+            @Html.Partial("_LikeButton", likeModel)
+            @Html.Partial("_UnlikeButton", likeModel)
                   
         }
         <span>@Model.LikesCount Likes</span>
-        <p>@Html.Raw(Model.Content)</p>
+       
     </section>
     @if (User.Identity.IsAuthenticated)
     {
@@ -76,12 +70,13 @@
                             </form>
                         </div>
                         
-                        <form asp-action="DeleteComment" asp-controller="Comment" method="post">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="articleId" value="@Model.Id" />
-                                                    <input type="hidden" name="commentId" value="@comment.Id" />
-                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                                </form>
+                        @Html.Partial("_DeleteComment", new CommentViewModel { ArticleId = Model.Id, Id = comment.Id })
+                        @*<form asp-action="DeleteComment" asp-controller="Comment" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="articleId" value="@Model.Id" />
+                            <input type="hidden" name="commentId" value="@comment.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>*@
                         </div>
                     }
                    
@@ -93,12 +88,13 @@
         
         else
         {
-            <p>No comments yet. Be the first to comment!</p>
+            <p>No comments yet. Be the first to" comment!</p>
         }
         
         @if (User.Identity.IsAuthenticated)
         {
-            <form asp-action="AddComment" asp-controller="Comment" method="post">
+            @Html.Partial("_AddComment", new CommentViewModel { ArticleId = Model.Id })
+            @*<form asp-action="AddComment" asp-controller="Comment" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="articleId" value="@Model.Id" />
                 <div class="form-group">
@@ -106,7 +102,7 @@
                     <textarea id="content" name="content" class="form-control"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Post Comment</button>
-            </form>
+            </form>*@
         }
         else
         {
@@ -158,4 +154,3 @@
     </script>
 }
 
-}

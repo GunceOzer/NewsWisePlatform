@@ -20,6 +20,17 @@
         </div>
     }
 }
+@if (User.Identity.IsAuthenticated)
+{
+    <div>
+        <a href="@Url.Action("SortByPositivity", new { sortByPositive = true })" class="btn btn-primary">Sort by Positive</a>
+        <a href="@Url.Action("SortByPositivity", new { sortByPositive = false })" class="btn btn-secondary">Sort by Negative</a>
+        <a href="@Url.Action("SortByDate", new{sortByNewest = true})" class="btn btn-primary bg-orange">Sort by Newest</a>
+        <a href="@Url.Action("SortByDate", new{sortByNewest = false})" class="btn btn-secondary bg-gradient" >Sort by Oldest</a>
+        
+    </div>
+}
+
 
 
 @if (Model !=null )
