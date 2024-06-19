@@ -1,4 +1,6 @@
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using NewsAggregationApplication.Data;
 using NewsAggregationApplication.Data.Entities;
@@ -8,6 +10,7 @@ using NewsAggregationApplication.UI.Interfaces;
 using NewsAggregationApplication.UI.Mappers;
 using NewsAggregationApplication.UI.Services;
 
+
 namespace NewsAggregationApplication.UI;
 
 public class Program
@@ -16,7 +19,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
+        
         builder.Services.AddControllersWithViews();
         
         builder.Services.AddDbContext<NewsDbContext>(options =>
@@ -32,9 +35,11 @@ public class Program
                 options.Password.RequiredLength = 6;
             })
             .AddRoles<IdentityRole<Guid>>() 
-            .AddEntityFrameworkStores<NewsDbContext>();
+            .AddEntityFrameworkStores<NewsDbContext>()
+            .AddDefaultTokenProviders();
+
         
-        
+        builder.Services.AddHttpClient();
         builder.Services.AddScoped<IArticleService, ArticleService>();
         builder.Services.AddScoped<ILikeService,LikeService>();
         builder.Services.AddScoped<IBookmarkService, BookmarkService>();
@@ -42,6 +47,14 @@ public class Program
         builder.Services.AddScoped<IAccountService, AccountService>();
         builder.Services.AddScoped<IImageExtractor, ImageExtractor>();
         builder.Services.AddScoped<IContentScraper, ContentScraper>();
+        builder.Services.AddScoped<IJwtTokenService,JwtTokenService>();
+        builder.Services.AddHttpClient<IEmailService, EmailService>();
+        builder.Services.AddScoped<IInactiveUserNotificationService,InactiveUserNotificationService>();
+        builder.Services.AddHostedService<StartupHostedService>();
+        builder.Services.AddScoped<ISentimentAnalysisService,SentimentAnalysisService>();
+       
+
+
         builder.Services.AddScoped<ArticleMapper>();
         builder.Services.AddScoped<LikeMapper>();
         builder.Services.AddScoped<BookmarkMapper>();
@@ -51,6 +64,17 @@ public class Program
         builder.Services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(AddCommentCommandHandler).Assembly));
+        
+        //Hangfire service
+        builder.Services.AddHangfire(conf => conf
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseDefaultTypeSerializer()
+            .UseSqlServerStorage(builder.Configuration.GetConnectionString("NewsAggregationDatabase")));
+
+        builder.Services.AddHangfireServer();
+
+        
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
@@ -58,16 +82,17 @@ public class Program
             var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
             await accountService.CreateRoles(scope.ServiceProvider);
         }
-        
+       
 
+      
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
 
+        app.UseHangfireDashboard();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
 
@@ -81,7 +106,6 @@ public class Program
             name: "default",
             pattern: "{controller=Article}/{action=Index}/{id?}");
         
-
         app.Run();
     }
     
