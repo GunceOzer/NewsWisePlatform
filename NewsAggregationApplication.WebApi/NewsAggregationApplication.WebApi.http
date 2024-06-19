@@ -1,0 +1,6 @@
+@NewsAggregationApplication.WebApi_HostAddress = http://localhost:5100
+
+GET {{NewsAggregationApplication.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
