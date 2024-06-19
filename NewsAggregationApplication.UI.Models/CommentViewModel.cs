@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using NewsAggregationApplication.Data.Entities;
+
 namespace NewsAggregationApplication.UI.Models;
 
 public class CommentViewModel
@@ -12,6 +14,7 @@ public class CommentViewModel
     public string Content { get; set; }
     public string FullName { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid ArticleId { get; set; }
 
 
 }
