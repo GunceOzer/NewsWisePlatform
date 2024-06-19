@@ -1,0 +1,13 @@
+@model CommentViewModel
+
+<form asp-action="AddComment" asp-controller="Comment" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="articleId" value="@Model.ArticleId" />
+    <div class="form-group">
+        <label for="content">Add a Comment</label>
+        <textarea id="content" name="content" class="form-control"></textarea>
+        
+
+    </div>
+    <button type="submit" class="btn btn-primary">Post Comment</button>
+</form>

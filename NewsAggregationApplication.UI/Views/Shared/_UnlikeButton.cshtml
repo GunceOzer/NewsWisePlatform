@@ -1,0 +1,6 @@
+@model LikeModel
+
+<form asp-action="Unlike" asp-controller="Like" method="post">
+    <input type="hidden" asp-for="ArticleId"/>
+    <button type="submit" class="btn btn-warning">Unlike</button>
+</form>

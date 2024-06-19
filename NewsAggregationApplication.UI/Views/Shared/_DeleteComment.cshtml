@@ -1,0 +1,8 @@
+@model CommentViewModel
+
+<form asp-action="DeleteComment" asp-controller="Comment" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="articleId" value="@Model.ArticleId" />
+    <input type="hidden" name="commentId" value="@Model.Id" />
+    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+</form>
