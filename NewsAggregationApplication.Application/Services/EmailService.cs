@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Text;
 using Mailgun;
 using Microsoft.Extensions.Configuration;
@@ -9,43 +11,40 @@ namespace NewsAggregationApplication.UI.Services;
 public class EmailService:IEmailService
 {
     private readonly IConfiguration _configuration;
-    private readonly HttpClient _httpClient;
 
 
-    public EmailService(IConfiguration configuration, HttpClient httpClient)
+    public EmailService(IConfiguration configuration)
     {
         _configuration = configuration;
-        _httpClient = httpClient;
     }
-
     public async Task SendEmailAsync(string email, string subject, string message)
     {
-        var apiKey = _configuration["Mailgun:ApiKey"];
-        var domain = _configuration["Mailgun:Domain"];
-        var fromEmail = _configuration["Mailgun:FromEmail"];
+        var smtpSettings = _configuration.GetSection("Smtp");
 
-        var requestUri = $"https://api.mailgun.net/v3/{domain}/messages";
-        var requestContent = new FormUrlEncodedContent(new[]
+        var fromAddress = new MailAddress(smtpSettings["FromEmail"], "NewsWise");
+        var toAddress = new MailAddress(email);
+        string fromPassword = smtpSettings["Password"];
+
+        var smtp = new SmtpClient
         {
-            new KeyValuePair<string, string>("from", fromEmail),
-            new KeyValuePair<string, string>("to", email),
-            new KeyValuePair<string, string>("subject", subject),
-            new KeyValuePair<string, string>("html", message)
-        });
+            Host = smtpSettings["Host"],
+            Port = int.Parse(smtpSettings["Port"]),
+            EnableSsl = true,
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+        };
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-            Convert.ToBase64String(Encoding.ASCII.GetBytes($"api:{apiKey}")));
-
-        // Logging the email for debugging 
-        Console.WriteLine($"Sending email to: {email}");
-        Console.WriteLine($"Subject: {subject}");
-        Console.WriteLine($"Message: {message}");
-        
-        var response = await _httpClient.PostAsync(requestUri, requestContent);
-        // Logging the response for debugging
-        var responseContent = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Email sent response: {responseContent}");
-        
-        response.EnsureSuccessStatusCode();
+        using (var mailMessage = new MailMessage(fromAddress, toAddress)
+               {
+                   Subject = subject,
+                   Body = message,
+                   IsBodyHtml = true
+               })
+        {
+            await smtp.SendMailAsync(mailMessage);
+        }
     }
 }
+
+   
