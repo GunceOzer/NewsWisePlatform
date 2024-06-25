@@ -26,7 +26,7 @@ public class LikeController : Controller
     
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Like(LikeModel model)
+    public async Task<IActionResult> Like(LikeModel model, string returnUrl)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
@@ -43,21 +43,25 @@ public class LikeController : Controller
             var result = await _likeService.LikeArticleAsync(likeDto);
             if (result)
             {
-                _logger.LogInformation("Article liked.");
-                return RedirectToAction("Details", "Article", new { id = model.ArticleId });
-            }
+                TempData["SuccessMessage"] = "Article liked successfully.";
 
-            return BadRequest("Unable to like article.");
+                _logger.LogInformation("Article liked.");
+                return Redirect(returnUrl);
+               
+            }
+            TempData["ErrorMessage"] = "You already liked the article.";
+            return Redirect(returnUrl);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to like article.");
-            return RedirectToAction("Details", "Article", new { id = model.ArticleId, error = "Failed to like article" });
+            TempData["ErrorMessage"] = "An error occurred while liking the article.";
+            return Redirect(returnUrl);
         }
     }
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Unlike(LikeModel model)
+    public async Task<IActionResult> Dislike(LikeModel model, string returnUrl)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
@@ -70,19 +74,24 @@ public class LikeController : Controller
             model.UserId = Guid.Parse(userId);
             var likeDto = _likeMapper.LikeModelToLikeDto(model);
 
-            var result = await _likeService.UnlikeArticleAsync(likeDto);
+            var result = await _likeService.DislikeArticleAsync(likeDto);
             if (result)
             {
-                _logger.LogInformation("Article unliked.");
-                return RedirectToAction("Details", "Article", new { id = model.ArticleId });
+                _logger.LogInformation("Article disliked.");
+                return Redirect(returnUrl);
+                
             }
+            TempData["ErrorMessage"] = "Unable to dislike because you already disliked the article.";
+            return Redirect(returnUrl);
 
-            return BadRequest("Unable to unlike article.");
+           
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to unlike article.");
-            return RedirectToAction("Details", "Article", new { id = model.ArticleId, error = "Failed to unlike article" });
+            _logger.LogError(ex, "Failed to dislike article.");
+            TempData["ErrorMessage"] = "An error occurred while disliking the article.";
+            return Redirect(returnUrl);
+            
         }
     }
 }

@@ -28,17 +28,14 @@ public class CommentController : Controller
     }
 
 
-    // GET
-    /*public IActionResult Index()
-    {
-        return View();
-    }*/
+    
     [HttpPost]
     public async Task<IActionResult> AddComment(Guid articleId, CommentViewModel model)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
+            TempData["ErrorMessage"] = "User is not authorized.";
             return Unauthorized();
         }
 
@@ -56,12 +53,14 @@ public class CommentController : Controller
                 _logger.LogInformation("Comment added.");
                 return RedirectToAction("Details", "Article", new { id = articleId });
             }
-
-            return BadRequest("Unable to add comment.");
+            TempData["ErrorMessage"] = "Unable to add comment.";
+            return RedirectToAction("Details", "Article", new { id = articleId });
+            
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add comment.");
+            TempData["ErrorMessage"] = "An error occurred while adding the comment.";
             return RedirectToAction("Details", "Article", new { id = articleId, error = "Failed to add comment" });
         }
 
@@ -89,11 +88,12 @@ public class CommentController : Controller
         if (success)
         {
             _logger.LogInformation("Comment edited successfully.");
+            TempData["SuccessMessage"] = "Comment could not be edited.";
             return RedirectToAction("Details", "Article", new { id = articleId });
         }
 
         _logger.LogWarning("Failed to edit comment.");
-        TempData["Error"] = "Comment could not be edited.";
+        TempData["ErrorMessage"] = "Comment could not be edited.";
         return RedirectToAction("Details", "Article", new { id = articleId });
         
     }

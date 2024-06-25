@@ -61,7 +61,8 @@ public class ArticleController : Controller
             if (!deleted)
             {
                 _logger.LogWarning($"Article with ID: {id} not found.");
-                return NotFound();
+                TempData["ErrorMessage"] = $"Article with ID: {id} not found.";
+                return RedirectToAction(nameof(Index));
             }
             _logger.LogInformation($"Article with ID: {id} deleted successfully.");
             return RedirectToAction(nameof(Index));
@@ -69,7 +70,9 @@ public class ArticleController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error deleting article with ID: {id}.");
-            return NotFound();
+            TempData["ErrorMessage"] = "An error occurred while deleting the article.";
+            return RedirectToAction(nameof(Index));
+
         }
     }
     public async Task<IActionResult> Details(Guid id)
@@ -82,7 +85,9 @@ public class ArticleController : Controller
             if (articleDto == null)
             {
                 _logger.LogWarning($"Article with ID: {id} not found.");
-                return NotFound();
+               TempData["ErrorMessage"] = $"Article with ID: {id} not found.";
+               return RedirectToAction(nameof(Index));
+
             }
 
             var article = _articleMapper.ArticleDtoToArticleModel(articleDto);
@@ -94,7 +99,8 @@ public class ArticleController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Failed to retrieve details for article with ID: {id}.");
-            return NotFound();
+            TempData["ErrorMessage"] = "An error occurred while retrieving the article details.";
+            return RedirectToAction(nameof(Index));
         }
     }
     

@@ -50,7 +50,8 @@ public class AccountController : Controller
                     _logger.LogInformation("User created a new account with password.");
                     await _userManager.AddToRoleAsync(user, "User");
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("index", "home");
+                    TempData["SuccessMessage"] = "Account created successfully.";
+                    return RedirectToAction("Index", "Article");
                 }
                 foreach (var error in result.Errors)
                 {
@@ -89,21 +90,26 @@ public class AccountController : Controller
                     await _userManager.UpdateAsync(user);
                     
                     _logger.LogInformation("User logged in.");
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "Article");
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    TempData["ErrorMessage"] = "Invalid login attempt. Please check your email and password.";
                     _logger.LogWarning("User login failed.");
+                    return RedirectToAction("Login");
+                    
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login attempt failed.");
-                ModelState.AddModelError("", "An unexpected error occurred.");
+                TempData["ErrorMessage"] = "An unexpected error occurred.";
+                return RedirectToAction("Login");
             }
         }
-        return View(model);
+        //return View(model);
+        return RedirectToAction("Index", "Article");
+
     }
 
     [HttpPost]
@@ -119,6 +125,7 @@ public class AccountController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error logging out.");
+            TempData["ErrorMessage"] = "An error occurred while logging out.";
             return RedirectToAction("Index", "Article"); 
         }
     }
@@ -151,7 +158,7 @@ public class AccountController : Controller
         {
             await _signInManager.RefreshSignInAsync(user);
             TempData["SuccessMessage"] = "Your password has been changed.";
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Article");
         }
 
         foreach (var error in result.Errors)
@@ -192,7 +199,8 @@ public class AccountController : Controller
                 model.Email,
                 "Reset Password",
                 $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
+          
+            TempData["SuccessMessage"] = "Password reset email sent. Please check your email.";
             return RedirectToAction("ForgotPasswordConfirmation");
         }
 
@@ -233,6 +241,7 @@ public class AccountController : Controller
             if (user == null)
             {
                 _logger.LogError("User not found");
+                TempData["ErrorMessage"] = "User not found.";
                 return RedirectToAction("ResetPasswordConfirmation");
             }
 
@@ -241,7 +250,7 @@ public class AccountController : Controller
             var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.Password);
             if (result.Succeeded)
             {
-               
+                TempData["SuccessMessage"] = "Password has been reset successfully.";
                 return RedirectToAction("ResetPasswordConfirmation");
             }
 

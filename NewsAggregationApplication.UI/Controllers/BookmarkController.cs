@@ -44,122 +44,17 @@ public class BookmarkController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch bookmarked articles.");
+            TempData["ErrorMessage"] = "Failed to fetch bookmarked articles.";
             return View(new List<ArticleModel>()); // Return an empty view in case of failure
         }
     }
 
     
+   
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> Bookmark([FromBody] BookmarkDto bookmarkDto)//Guid articleId
+    public async Task<IActionResult> ToggleBookmark(Guid articleId, string returnUrl)
     {
-        if (bookmarkDto == null)
-        {
-            return BadRequest("Bookmark data is null.");
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        bookmarkDto.UserId = Guid.Parse(userId);
-        var result = await _bookmarkService.BookmarkArticleAsync(bookmarkDto);
-
-        if (result)
-        {
-            return Ok();
-        }
-
-        return StatusCode(500, "A problem happened while handling your request.");
-        /*var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var result = await _bookmarkService.BookmarkArticleAsync(articleId, Guid.Parse(userId));
-            if (result)
-            {
-                _logger.LogInformation($"Article {articleId} bookmarked by user {userId}.");
-            }
-            else
-            {
-                _logger.LogWarning($"Article {articleId} already bookmarked by user {userId}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error bookmarking article {articleId} by user {userId}.");
-        }
-
-        return RedirectToAction(nameof(Index));*/
-    }
-
-    [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> RemoveBookmark(Guid articleId)
-    {
-        
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var result = await _bookmarkService.RemoveBookmarkAsync(articleId, Guid.Parse(userId));
-            if (result)
-            {
-                _logger.LogInformation($"Bookmark removed for article {articleId} by user {userId}.");
-            }
-            else
-            {
-                _logger.LogWarning($"Failed to remove bookmark for article {articleId} by user {userId}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error removing bookmark for article {articleId} by user {userId}.");
-        }
-
-        return RedirectToAction("Index");
-    }
-
-    [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> ToggleBookmark(Guid articleId)
-    {
-        /*var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var isBookmarked = await _bookmarkService.IsArticleBookmarkedByUser(articleId, Guid.Parse(userId));
-            if (isBookmarked)
-            {
-                await _bookmarkService.RemoveBookmarkAsync(articleId, Guid.Parse(userId));
-                _logger.LogInformation($"Bookmark removed for article {articleId}.");
-            }
-            else
-            {
-                await _bookmarkService.BookmarkArticleAsync(articleId, Guid.Parse(userId));
-                _logger.LogInformation($"Article {articleId} bookmarked.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error toggling bookmark for article {articleId}.");
-        }
-
-        return RedirectToAction("Index", "Article"); */
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
@@ -173,6 +68,8 @@ public class BookmarkController : Controller
             {
                 await _bookmarkService.RemoveBookmarkAsync(articleId, Guid.Parse(userId));
                 _logger.LogInformation($"Bookmark removed for article {articleId}.");
+                TempData["SuccessMessage"] = "Bookmark removed successfully.";
+
             }
             else
             {
@@ -185,15 +82,19 @@ public class BookmarkController : Controller
                 };
                 await _bookmarkService.BookmarkArticleAsync(bookmarkDto);
                 _logger.LogInformation($"Article {articleId} bookmarked.");
+               
+
             }
+
+            return Redirect(returnUrl);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error toggling bookmark for article {articleId}.");
+            TempData["ErrorMessage"] = "An error occurred while toggling the bookmark.";
+            return Redirect(returnUrl);
         }
-
-        return RedirectToAction("Index", "Article");
     }
-    
-    
+
+   
 }
