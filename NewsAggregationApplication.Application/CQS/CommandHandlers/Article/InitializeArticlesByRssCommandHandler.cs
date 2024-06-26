@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NewsAggregationApplication.Data;
 using NewsAggregationApplication.UI.Commands;
@@ -10,6 +11,8 @@ namespace NewsAggregationApplication.UI.CommandHandlers.Article;
 
 public class InitializeArticlesByRssCommandHandler : IRequestHandler<InitializeArticlesByRssCommand>
 {
+    //to create a new DbContext instance for each operation
+    private readonly IServiceProvider _serviceProvider;
     private readonly NewsDbContext _dbContext;
     private readonly ILogger<InitializeArticlesByRssCommandHandler> _logger;
     private readonly IContentScraper _contentScraper;
@@ -19,24 +22,28 @@ public class InitializeArticlesByRssCommandHandler : IRequestHandler<InitializeA
 
     public InitializeArticlesByRssCommandHandler(NewsDbContext dbContext,
         ILogger<InitializeArticlesByRssCommandHandler> logger, IContentScraper contentScraper,
-        IImageExtractor imageExtractor, ISentimentAnalysisService sentimentAnalysisService)
+        IImageExtractor imageExtractor, ISentimentAnalysisService sentimentAnalysisService, IServiceProvider serviceProvider)
     {
         _dbContext = dbContext;
         _logger = logger;
         _contentScraper = contentScraper;
         _imageExtractor = imageExtractor;
         _sentimentAnalysisService = sentimentAnalysisService;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task Handle(InitializeArticlesByRssCommand command, CancellationToken cancellationToken)
     {
-        foreach (var item in command.RssData)
+        await Parallel.ForEachAsync(command.RssData, new ParallelOptions { CancellationToken = cancellationToken }, async (item, token) =>
         {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<NewsDbContext>();
+
             var articleUrl = item.Links.FirstOrDefault()?.Uri.ToString();
-            if (await _dbContext.Articles.AnyAsync(a => a.SourceUrl == articleUrl, cancellationToken))
+            if (await dbContext.Articles.AsNoTracking().AnyAsync(a => a.SourceUrl == articleUrl, token))
             {
                 _logger.LogInformation($"Skipped addition of duplicate article from URL: {articleUrl}");
-                continue;
+                return;
             }
 
             var article = new Data.Entities.Article
@@ -51,13 +58,14 @@ public class InitializeArticlesByRssCommandHandler : IRequestHandler<InitializeA
                 SourceId = command.SourceId
             };
 
-            // Calculate the positivity score
             article.PositivityScore = await _sentimentAnalysisService.AnalyzeSentimentAsync(article.Content);
 
-            _dbContext.Articles.Add(article);
-        }
+            dbContext.Articles.Add(article);
+            await dbContext.SaveChangesAsync(token);
+        });
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Articles initialized with content and images.");
+    
+       
     }
 }
