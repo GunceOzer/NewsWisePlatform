@@ -27,16 +27,16 @@ export class UserService {
 
     return this.apiService.post(`${this.apiUrl}/login`, loginData).pipe(
       map((response: any) => {
-        console.log('Login response:', response); // Log the entire response
+        console.log('Login response:', response); 
         if (response && response.token && response.refreshToken) {
           const decodedToken = this.decodeToken(response.token);
-          console.log('Decoded token:', decodedToken); // Log the decoded token
+          console.log('Decoded token:', decodedToken);
 
           const roles = decodedToken.role || decodedToken.roles;
           const userId = decodedToken.nameid || decodedToken.sub; 
 
           if (userId) {
-            response.id = userId; // Add the userId to the response object
+            response.id = userId; 
             localStorage.setItem('currentUser', JSON.stringify({ ...response, id: userId }));
           } else {
             console.error('User ID not found in the token');
