@@ -1,0 +1,29 @@
+.logo{
+    width: 100px;
+}
+.spacer {
+  flex: 1 1 auto;
+}
+
+.logout {
+  margin-left: auto;
+  color:#5f6769
+}
+.main {
+  padding-top: 80px; /* Adjust this based on the height of your navbar */
+}
+
+.mat-toolbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000; /* Ensure it stays on top */
+}
+
+.mat-drawer-container {
+  margin-top: 64px; /* Height of the mat-toolbar */
+}
+
+.content {
+  padding: 20px;
+}

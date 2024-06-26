@@ -1,0 +1,40 @@
+<div class="container">
+  <div class="page-container" *ngIf="article">
+    <div class="article-container">
+      <h2>{{ article.title }}</h2>
+      <img [src]="article.urlToImage" alt="Article image" />
+      <div class="content" [innerHTML]="article.content"></div>
+      <div>
+        <span>{{ article.publishedDate }}</span>
+      </div>
+      <div>
+        <span>{{ article.sourceUrl }}</span>
+      </div>
+      <div>
+        <span>Likes: {{ article.likesCount }}</span>
+      </div>
+      <span></span>
+
+      <mat-card-actions *ngIf="isAuthenticated()">
+        <button *ngIf="isAdmin()" mat-button (click)="deleteArticle(article.id)">DELETE</button>
+        <button mat-button (click)="toggleLike()">
+          {{ article.likesCount > 0 ? 'DISLIKE' : 'LIKE' }}
+        </button>
+
+        <button mat-button (click)="toggleBookmark()">
+          {{ article.isBookmarked ? 'REMOVE BOOKMARK' : 'BOOKMARK' }}
+        </button>
+      </mat-card-actions>
+      <mat-card-actions>
+        <a [routerLink]="['/home']" routerLinkActive="active" mat-button>Back to home</a>
+      </mat-card-actions>
+
+      <app-comment [articleId]="article.id"></app-comment>
+
+
+
+    </div>
+  </div>
+</div>
+
+

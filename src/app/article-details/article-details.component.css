@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 30px;
+}
+
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.article-container {
+  background-color: #283739;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  border-radius: 10px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.article-container img {
+  object-fit: cover;
+  width: 100%;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.content {
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.comments-section {
+  margin-top: 20px;
+}
+
+.comment-card {
+  margin-bottom: 10px;
+}

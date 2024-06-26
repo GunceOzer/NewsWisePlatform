@@ -1,0 +1,32 @@
+<div class="comments-section">
+  <div class="add-comment-section" *ngIf="isAuthenticated()">
+    <textarea [(ngModel)]="newCommentContent" placeholder="Add a comment"></textarea>
+    <button mat-button (click)="addComment()">Add Comment</button>
+  </div>
+  <div *ngIf="!isAuthenticated()">
+    <p>Please <a [routerLink]="['/login']">login</a> to add a comment.</p>
+  </div>
+
+  <div *ngFor="let comment of comments">
+    <mat-card class="comment-card">
+      <mat-card-header>
+        <mat-card-title>{{ comment.fullName }}</mat-card-title>
+        <mat-card-subtitle>{{ comment.createdAt | date: 'short' }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ng-container *ngIf="editMode && commentToEdit?.id === comment.id; else viewMode">
+          <textarea [(ngModel)]="newCommentContent"></textarea>
+          <button mat-button (click)="saveEditComment()">Save</button>
+          <button mat-button (click)="cancelEdit()">Cancel</button>
+        </ng-container>
+        <ng-template #viewMode>
+          <p>{{ comment.content }}</p>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions *ngIf="isAuthenticated()">
+        <button mat-button *ngIf="isAdmin() || isCommentOwner(comment.userId)" (click)="editComment(comment)">Edit</button>
+        <button mat-button *ngIf="isAdmin() || isCommentOwner(comment.userId)" (click)="deleteComment(comment.id)">Delete</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

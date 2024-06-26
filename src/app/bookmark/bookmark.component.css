@@ -1,0 +1,21 @@
+.bookmark-card{
+  background-color: #283739;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+
+  text-align: left;
+  border-radius: 10px;
+  width: 1000px;
+  margin-bottom: 5px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  margin: 0 auto;
+  padding-top: 20px !important;
+  align-items: center;
+}

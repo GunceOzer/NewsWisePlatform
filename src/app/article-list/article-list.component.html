@@ -1,0 +1,26 @@
+
+
+<div class="sorting-options">
+  <mat-form-field appearance="fill" *ngIf="isAuthenticated()">
+    <mat-label>Sort Articles</mat-label>
+    <mat-select (selectionChange)="sortArticles($event.value)">
+      <mat-option value="newest">Sort by Newest</mat-option>
+      <mat-option value="oldest">Sort by Oldest</mat-option>
+      <mat-option value="positive">Sort by Positive</mat-option>
+      <mat-option value="negative">Sort by Negative</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div class="article-list">
+  @for(article of articles; track $index){
+    <app-article-preview [article]="article"></app-article-preview>
+  }</div>
+
+<div class="spinner" *ngIf="showSpinner">
+  <mat-spinner [strokeWidth]="3"></mat-spinner>
+</div>
+
+
+
+

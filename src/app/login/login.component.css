@@ -1,0 +1,44 @@
+.login-card {
+  background-color: #2e2e2e;
+  color: #ffffff;
+  padding: 20px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.login-card mat-card-title {
+  color: #2e2e2e;
+}
+.form-container {
+  display: flex;
+  flex-direction: column;
+}
+.full-width {
+  width: 100%;
+  margin-bottom: 20px;
+}
+.login-card .mat-form-field-label {
+  color: #ffffff;
+}
+.login-card .mat-input-element {
+  color: #ffffff;
+}
+.login-card .login-button {
+  background-color: #4caf50;
+  color: #ffffff;
+}
+body {
+  background-color: #121212;
+  color: #2e2e2e;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+.reset-password-link {
+color: #4caf50;
+margin-top: 10px;
+}
+

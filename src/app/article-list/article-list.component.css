@@ -1,0 +1,49 @@
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  margin: 0 auto;
+  padding-top: 20px !important;
+  align-items: center;
+
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.sortByDate {
+  justify-content: left;
+}
+
+.sorting-options {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  margin: 0 auto;
+  justify-content: center;
+  padding-top: -40px !important;
+}
+
+.article-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  row-gap: 10px;
+  /* max-width: 2400px; */
+  justify-content: center;
+}
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+

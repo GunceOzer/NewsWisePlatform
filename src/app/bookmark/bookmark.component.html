@@ -1,0 +1,24 @@
+
+ <div class="container">
+  <h1>Bookmarked Articles</h1>
+  <div class="bookmark-list">
+    <div *ngFor="let bookmark of bookmarks">
+      <mat-card class="bookmark-card">
+        <img mat-card-image [src]="bookmark.urlToImage" alt="Article image" />
+        <mat-card-header>
+          <mat-card-title>{{ bookmark.title }}</mat-card-title>
+          <mat-card-subtitle>{{ bookmark.publishedDate }}</mat-card-subtitle>
+          <mat-card-subtitle>Likes: {{ bookmark.likesCount }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p [innerHTML]="bookmark.description"></p>
+        </mat-card-content>
+        <mat-card-actions>
+          <a [routerLink]="['/article-details/', bookmark.id]" routerLinkActive="active" mat-button>READ MORE</a>
+          <button mat-button (click)="removeBookmark(bookmark.id)">REMOVE BOOKMARK</button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
