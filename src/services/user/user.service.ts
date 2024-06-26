@@ -33,7 +33,7 @@ export class UserService {
           console.log('Decoded token:', decodedToken); // Log the decoded token
 
           const roles = decodedToken.role || decodedToken.roles;
-          const userId = decodedToken.nameid || decodedToken.sub; // Ensure your token contains the userId
+          const userId = decodedToken.nameid || decodedToken.sub; 
 
           if (userId) {
             response.id = userId; // Add the userId to the response object
