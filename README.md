@@ -7,16 +7,13 @@ to a configurable "positivity" metric. With NewsWise, users can personalize thes
 their preferences, ensuring a tailored news-reading experience
 
 #Features
-Sentiment Analysis on Comments: Our platform prioritizes a respectful and positive discussion environment.
-Our sentiment analysis feature automatically scans comments to prevent the use of bad words, and
-discriminatory language, ensuring a healthy and constructive conversation space for all users
+Comment: Authenticated users can write, edit, or delete comments
 
-Multiple Login Options: To streamline the user experience, NewsWise offers login methods
-including Google and Facebook. This feature allows for a quick and hassle-free sign-in process, 
-giving users immediate access to their personalized news feed
+Bookmark: Authenticated users can bookmark news to read them later
 
-Email Notifications: Engagement doesn't end when you leave the platform. If a user hasn't logged in for 
-10 days, NewsWis sends a friendly email reminder, bringing them back to the application with updates on 
+Like: Authenticated users can like or dislike news
+
+Email Notifications: If a user hasn't logged in for 10 days, NewsWis sends a friendly email reminder, bringing them back to the application with updates on 
 what they've missed.
 
 #User Engagement Strategy
@@ -24,5 +21,14 @@ Activation Phase First impressions matter. Users can engage with content immedi
 no registration is required. However, interactive features like liking, sharing, saving, and commenting on news 
 items are made accessible with an easy pop-up registration -- choose from quick social media sign-in options or 
 a more traditional email registration.
-Retention Phase The retention strategy includes email notifications. These are triggered after a 30-day inactivity 
+Retention Phase The retention strategy includes email notifications. These are triggered after a 10-day inactivity 
 period, re-engaging users with content that piques their interest and draws them back into the NewsWise community.
+
+
+#Future Work
+
+- Multiple Login Options: To streamline the user experience, NewsWise offers login methods
+including Google and Facebook. This feature allows for a quick and hassle-free sign-in process, 
+giving users immediate access to their personalized news feed
+
+-Sentiment analysis for comments: Sentiment analysis to prevent language abuse
